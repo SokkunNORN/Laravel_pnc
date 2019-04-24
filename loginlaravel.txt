@@ -1,0 +1,7 @@
+// public function redirectTo() {
+    //     if(Auth::user()->role_id == 1) {
+    //         return 'admin';
+    //     } else {
+    //         return 'student';
+    //     }
+    // }

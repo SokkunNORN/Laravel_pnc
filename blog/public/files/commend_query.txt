@@ -1,0 +1,268 @@
+
+#####Change datatype######
+ALTER TABLE locker
+MODIFY test int;
+==========================
+######Add New Column######
+ALTER TABLE locker
+ADD test int;
+==========================
+######Remove Column#######
+ALTER TABLE locker
+DROP test;
+==========================
+##Change Structure Table##
+ALTER TABLE locker
+something
+==========================
+##select value by letter##
+select * from tbl_name
+where field like "%k%";
+==========================
+########select two column mix one column########
+select concat(fName, lName)
+as "full Name" from tbl_name;
+#####################################
+select MAX(age) from tbl_name;
+select MIN(age) from tbl_name;
+select * from tbl_name
+where 20 > age > 30;
+
+##################################
+Aggregation function
+- min
+- max
+- sum
+- avg
+- count
+
+#############################
+
+use sakila;
+#select film.film_id, film.description, 
+#	category.name from film inner join film_category 
+#	inner join category on category.name = "Animation"
+#	and category.category_id = film_category.category_id
+#	and film_category.film_id = film.film_id; 
+
+select count(f.film_id) from film f, category c, film_category fc 
+	where f.film_id = fc.film_id
+	and fc.category_id = c.category_id
+	and c.name = "Animation";
+
+###############################
+
+
+#use test;
+#select concat(tblstudent.lastname,"  ", tblstudent.firstname) 
+#	as student, tblteacher.firstname as teacher 
+#	from tblstudent inner join tblteacher 
+#	on tblteacher.teacherid = tblstudent.teacherinchargeid
+#	and tblteacher.province = tblstudent.province;
+
+#select concat(ts.firstname," ",ts.lastname) as "Student name",
+#	ts.province as "Province student",
+#	tt.firstname as "Teacher name", tt.province as "Province teacher"
+# 	from tblstudent ts, tblteacher tt where ts.teacherinchargeid 
+#	= tt.teacherid
+#	and ts.province = tt.province;
+
+#####################################
+select * from tblprovinces pro where pro.pro_en_name 
+	in (select stu.province from tblstudent stu);
+
+#####################################
+use pnc_store;
+select * from product pro where not exists 
+	(select * from category cat 
+	where pro.catid = cat.catid);
+
+
+################## use view ###################
+#create view stuFullName as 
+	select concat(stu.firstname, " ", stu.lastname)
+	, stu.sex, stu.province from tblstudent stu;
+
+#drop view if exists stufullname;
+
+#create view stuparenttea as
+  select stu.studentid, concat(stu.firstname, " ",stu.lastname)
+  as "Student Name", stu.subject, stu.GPA,
+  concat(par.firstname, " ", par.lastname)
+  as "Parent"
+  from tblstudent stu inner join tblparent par on
+  stu.parentinchargeid = par.parentid 
+  where par.job = "Teacher";
+
+############# stored procedure #############
+# procedure = function but i can do crud more then view.
+
+# advantage 
+ - more functionality and platform related.
+ - developed once many use of application.
+ - task execute becomse easier and less complicated.
+ - network traffic reduced to a greater extent.
+ - centralization of all commands.
+ - runs all any kind of exviroments.
+
+############# syntax #################
+DELIMITER //
+CREATE PROCEDURE procedureName() 
+	BEGIN
+		// SQLStatement;
+	END //
+############ call procedure ############
+CALL procedureName();
+############ paramater ###############
+- in
+- out
+- inout
+############## example ###############
+
+DELIMITER //
+
+CREATE PROCEDURE getStudentsByUniversity(IN univer varchar(50)) 
+	BEGIN	
+		SELECT * FROM tblstudent stu 
+			where stu.university = univer;
+	END //
+
+#########################################
+
+#DELIMITER //
+#CREATE PROCEDURE searchStuLName(IN Lname varchar(50))
+#	BEGIN
+#		SELECT * from tblstudent 
+#			where lastname 
+#			like concat("%", Lname, "%");
+#	END //
+
+#call searchStuLName('U');
+
+############## find age in current year ###############
+delimiter //
+create procedure findYear(in bornYear int(10)) 
+	begin 
+		SELECT YEAR(CURDATE()) - bornYear as 'Your age';
+	end //
+
+call findYear(1);
+
+###############################################
+
+================== MySQL Triggers ================
+
+- It is a rule that you put on a table which basically says, whenever
+  you DELETE, UPDATE , INSERT something in this table, also do
+  something else.
+ 
+- a table we use 6 triggers.
+
+====== implementation ======
+- before/after insert (new)
+- before/after update (old, new)
+- before/after delete (old)
+
+======== syntax ========
+DELIMITER //
+CREATE TRIGGER trigger_name trigger_time
+	trigger_event 
+	ON table_name
+	FOR EACH ROW
+	BEGIN
+		// SQL statement 
+	END //
+
+=====================================
+use test;
+
+delimiter //
+
+create trigger before_pro_update before update on tblprovinces
+for each row
+begin
+	insert into tblprovince_backup (pro_id, action, changeon) 
+	values (old.pro_id, 'update', changeon = curdate());
+end //
+
+##################################################
+use test;
+
+#delimiter //
+
+#create trigger before_pro_update before update on tblprovinces
+#for each row
+#begin
+#	insert into tblprovince_backup (pro_id, action, changeon) 
+#	values (old.pro_id, 'update', changeon = curdate());
+#end //
+
+#select * from tblprovince_backup;
+
+#create table delete_record_pro (
+#	id int(11) auto_increment primary key,
+#	pro_id int,
+#	action varchar(50),
+#	pro_kh varchar(50),
+#	pro_en varchar(50)
+#);
+
+#alter table delete_record_pro
+#add currenttime varchar(50);
+
+delimiter //
+#create trigger add_provice_new after insert on tblprovinces
+#	for each row
+#	begin 
+#		insert into tblprovice_audiue (pro_id, action, pro_kh, pro_en, currenttime)
+#		values (new.pro_id, "Create", new.pro_kh_name, new.pro_en_name, currenttime = curdate());
+#	end //
+
+#drop trigger delete_record_pro;
+
+#create trigger delete_record_pro before delete on tblprovinces
+#for each row
+#begin 
+#	insert into delete_record_pro (pro_id, action, pro_kh, pro_en, currenttime)
+#	values (old.pro_id, "delete", old.pro_kh_name, old.pro_en_name, currenttime = curdate());
+#end //
+
+#select * from delete_record_pro;
+########################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
